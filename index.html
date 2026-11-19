@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ห้องทดลองเสียง 3D | ฟิสิกส์ ม.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--c:#4de1e8;--p:#ff6b9a;--g:#ffd166;--t:#eef6ff;--m:#a9bfd8;--gl:rgba(13,30,55,.66);--bd:rgba(130,190,255,.2)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:"Noto Sans Thai",Tahoma,sans-serif;color:var(--t);line-height:1.6;background:radial-gradient(circle at 15% 0,#173a60 0,#071426 45%,#040b16 100%);overflow:hidden}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:14px;height:100vh;padding:14px}
+.stage{position:relative;border-radius:26px;overflow:hidden;border:1px solid var(--bd);background:radial-gradient(ellipse at 50% 30%,#12315a 0,#081a31 55%,#050e1c 100%);box-shadow:0 24px 70px #0007}
+#gl{position:absolute;inset:0}
+#gl canvas{display:block;outline:0;cursor:grab}
+#gl canvas:active{cursor:grabbing}
+.glass{background:var(--gl);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--bd)}
+.hud{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none;z-index:5}
+.brand{display:flex;gap:10px;align-items:center;padding:8px 16px 8px 10px;border-radius:18px;pointer-events:auto}
+.brand i{font-style:normal;display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#0a8f9c,#4de1e8);font-size:1.2rem}
+.brand small{display:block;color:var(--c);font-weight:700;letter-spacing:.08em;font-size:.68rem;line-height:1.2}
+.brand b{font-size:1.02rem;line-height:1.2}
+.tools{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;pointer-events:auto}
+.tb{border:1px solid var(--bd);background:var(--gl);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:var(--t);font:inherit;font-size:.82rem;padding:7px 12px;border-radius:12px;cursor:pointer;transition:.2s}
+.tb:hover{background:rgba(40,100,150,.55);transform:translateY(-1px)}
+.tb.on{border-color:var(--c);box-shadow:0 0 14px #4de1e844}
+#hs{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+#hs.off .hs{display:none}
+.hs{position:absolute;left:0;top:0;pointer-events:auto;border:0;background:none;color:var(--t);font:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0;will-change:transform}
+.hs .dot{position:relative;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:rgba(10,30,55,.85);border:2px solid var(--c);font-size:.8rem;box-shadow:0 0 16px #4de1e888;transition:.25s}
+.hs .dot:before{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--c);opacity:0;animation:pulse 2s infinite}
+.hs .lb{font-size:.72rem;padding:3px 9px;border-radius:99px;background:rgba(8,22,42,.82);border:1px solid var(--bd);white-space:nowrap;opacity:.9;transition:.25s}
+.hs:hover .dot,.hs.on .dot{background:var(--c);transform:scale(1.2);border-color:#fff}
+.hs.on .lb,.hs:hover .lb{background:var(--c);color:#04202a;font-weight:700}
+@keyframes pulse{0%{transform:scale(.7);opacity:.9}100%{transform:scale(1.7);opacity:0}}
+.info{position:absolute;left:14px;bottom:56px;width:min(400px,calc(100% - 28px));padding:16px 18px;border-radius:20px;z-index:6;display:none;gap:12px;box-shadow:0 18px 50px #0007;border-left:4px solid var(--c)}
+.info.show{display:flex;animation:pop .45s cubic-bezier(.2,1.3,.4,1)}
+@keyframes pop{0%{opacity:0;transform:translateY(24px) scale(.92)}100%{opacity:1;transform:none}}
+.info .ic{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:1.5rem;background:linear-gradient(135deg,#0b7e8a,#2fbac4)}
+.info small{color:var(--c);font-weight:700;letter-spacing:.05em;font-size:.7rem}
+.info h3{margin:0 0 4px;font-size:1.05rem}
+.info p{margin:0;font-size:.88rem;color:var(--m)}
+.fact{margin-top:8px;padding:6px 10px;border-radius:10px;font-size:.82rem;background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.35);color:var(--g)}
+.info .x{position:absolute;top:8px;right:10px;border:0;background:none;color:var(--m);font-size:1.3rem;cursor:pointer;line-height:1}
+.foot{position:absolute;left:14px;right:14px;bottom:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.76rem;color:var(--m);pointer-events:none;z-index:4}
+.foot span{padding:4px 12px;border-radius:99px;background:rgba(7,20,38,.6)}
+.foot i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.panel{display:flex;flex-direction:column;min-height:0;border-radius:26px;background:linear-gradient(170deg,rgba(18,42,72,.9),rgba(8,20,38,.94));border:1px solid var(--bd);box-shadow:0 24px 70px #0007;overflow:hidden}
+.tabs{display:flex;gap:6px;padding:12px 12px 0}
+.tabs button{flex:1;border:0;background:rgba(255,255,255,.05);color:var(--m);font:inherit;font-size:.88rem;padding:10px 6px;border-radius:14px 14px 0 0;cursor:pointer;transition:.2s;border-bottom:3px solid transparent}
+.tabs button.on{background:rgba(77,225,232,.12);color:var(--t);border-bottom-color:var(--c);font-weight:700}
+.body{flex:1;overflow:auto;padding:18px}
+.tab{display:none;animation:fade .4s ease}
+.tab.on{display:block}
+@keyframes fade{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:none}}
+.body h2{margin:0 0 4px;font-size:1.2rem}
+.muted{color:var(--m);font-size:.88rem;margin:0 0 14px}
+.ctl{padding:12px 14px;border-radius:16px;background:rgba(5,16,30,.6);border:1px solid rgba(130,190,255,.15);margin-bottom:10px}
+.ctl label{display:flex;justify-content:space-between;font-weight:700;font-size:.92rem}
+.ctl output{color:var(--g);font-variant-numeric:tabular-nums}
+.ctl small{color:var(--m);font-size:.76rem}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;margin:14px 0 8px;border-radius:9px;outline:0;cursor:pointer;background:linear-gradient(90deg,var(--c) var(--p,50%),#233f5d var(--p,50%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:4px solid var(--c);box-shadow:0 0 12px #4de1e8aa}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:4px solid var(--c)}
+.formula{font-size:1.5rem;font-weight:700;color:var(--c);text-align:center;padding:10px;margin:12px 0 6px;border-radius:14px;background:rgba(4,14,28,.7);border:1px solid rgba(77,225,232,.3)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.metric{padding:10px;border-radius:14px;text-align:center;background:rgba(5,16,30,.6);border:1px solid rgba(130,190,255,.15)}
+.metric strong{display:block;color:var(--g);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.metric span{font-size:.74rem;color:var(--m)}
+.btn{border:1px solid #3b6688;background:#173858;color:var(--t);padding:9px 16px;border-radius:12px;cursor:pointer;font:inherit;font-size:.9rem;transition:.2s}
+.btn:hover{background:#214a70;transform:translateY(-1px)}
+.btn.pri{background:linear-gradient(135deg,#087c89,#14a9b4);border-color:#27b8c1}
+.note{font-size:.78rem;color:var(--m)}
+.step{display:flex;gap:12px;padding:12px;margin-bottom:10px;border-radius:16px;background:rgba(5,16,30,.6);border:1px solid rgba(130,190,255,.15);transition:.25s}
+.step:hover{transform:translateX(4px);border-color:var(--c)}
+.step b.n{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:#0b7e8a}
+.step h3{margin:0 0 2px;font-size:.98rem}
+.step div{font-size:.85rem;color:var(--m)}
+.sec{margin:18px 0 8px;font-size:1rem;color:var(--c)}
+.qq{padding:12px 0;border-top:1px solid rgba(130,190,255,.18)}
+.qq:first-of-type{border-top:0}
+.qq p{margin:0 0 6px;font-weight:700;font-size:.92rem}
+.qq label{display:flex;gap:8px;padding:7px 10px;border-radius:10px;cursor:pointer;font-size:.88rem;transition:.2s}
+.qq label:hover{background:rgba(77,225,232,.12)}
+.qq input{accent-color:var(--c)}
+.fb{display:none;margin-top:8px;padding:10px 12px;border-radius:12px;font-size:.84rem;animation:fade .4s}
+.good{background:#123b31;border:1px solid #35866c}
+.bad{background:#442238;border:1px solid #a84f75}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:960px){
+body{overflow:auto;height:auto}
+.app{grid-template-columns:1fr;height:auto}
+.stage{height:62vh;min-height:430px}
+.panel{min-height:auto}
+.body{overflow:visible}
+.tb span{display:none}
+.info{bottom:84px}
+}
+</style>
+</head>
+<body>
+<main class="app">
+<section class="stage" id="stage">
+<div id="gl"></div>
+<div class="hud">
+<div class="brand glass"><i>🔊</i><div><small>PHYSICS LAB · มัธยมศึกษาปีที่ 5</small><b>ห้องทดลองเรื่องเสียง 3D</b></div></div>
+<div class="tools">
+<button class="tb on" id="bPlay">⏸ <span>หยุด</span></button>
+<button class="tb" id="bRot">🔄 <span>หมุนอัตโนมัติ</span></button>
+<button class="tb on" id="bHs">📍 <span>จุดข้อมูล</span></button>
+<button class="tb" id="bHome">🎯 <span>มุมเริ่มต้น</span></button>
+</div>
+</div>
+<div id="hs"></div>
+<article class="info glass" id="info"></article>
+<div class="foot"><span>🖱 ลากหมุน · คลิกขวา/สองนิ้วแพน · ล้อเมาส์ซูม · คลิกจุด 📍 เพื่อเรียนรู้</span><span><i style="background:#4de1e8"></i>ขยายตัว <i style="background:#ffd166;margin-left:8px"></i>อัดตัว <i style="background:#ff6b9a;margin-left:8px"></i>อนุภาคที่ติดตาม</span></div>
+</section>
+
+<aside class="panel">
+<nav class="tabs">
+<button class="on" data-t="t1">🧪 ทดลอง</button>
+<button data-t="t2">📚 เนื้อหา</button>
+<button data-t="t3">📝 ทดสอบ</button>
+</nav>
+<div class="body">
+
+<div class="tab on" id="t1">
+<h2>แผงควบคุมการทดลอง</h2>
+<p class="muted">เลื่อนตัวควบคุมแล้วสังเกตคลื่นในฉาก 3D เปลี่ยนทันที</p>
+<div class="ctl"><label for="temp">🌡 อุณหภูมิอากาศ <output id="tempOut">20 °C</output></label><input id="temp" type="range" min="-10" max="40" step="1" value="20"><small>ช่วงทดลอง −10 ถึง 40 °C (ปรับแล้วอัตราเร็วจะตามค่าทฤษฎี)</small></div>
+<div class="ctl"><label for="speed">💨 อัตราเร็วที่ใช้แสดงผล <output id="speedOut">343 m/s</output></label><input id="speed" type="range" min="325" max="355" step="1" value="343"><small>ช่วงทดลอง 325 ถึง 355 m/s ปรับแยกเพื่อเปรียบเทียบกับค่าทฤษฎี</small></div>
+<div class="ctl"><label for="freq">🎵 ความถี่ของเสียง <output id="freqOut">220 Hz</output></label><input id="freq" type="range" min="100" max="400" step="10" value="220"><small>ความถี่สูง → ความยาวคลื่นสั้นลง (λ = v / f)</small></div>
+<div class="formula">v ≈ 331 + 0.6T</div>
+<div class="note">v คืออัตราเร็วเสียงโดยประมาณ (m/s) และ T คืออุณหภูมิอากาศ (°C) ที่ความดันบรรยากาศทั่วไป</div>
+<div class="metrics">
+<div class="metric"><strong id="calcSpeed">343.0 m/s</strong><span>ค่าจากอุณหภูมิ</span></div>
+<div class="metric"><strong id="diff">0.0 m/s</strong><span>ต่างจากค่าที่เลือก</span></div>
+<div class="metric"><strong id="lam">1.56 m</strong><span>ความยาวคลื่น λ</span></div>
+<div class="metric"><strong id="period">2.92 ms</strong><span>เวลาเดินทาง 1 เมตร*</span></div>
+</div>
+<p class="note">*คำนวณจากอัตราเร็วที่เลือกในแถบเลื่อน ไม่ใช่คาบของคลื่น · ภาพเคลื่อนไหวเป็นแบบ Slow Motion เพื่อให้สังเกตได้ง่าย</p>
+<div class="row"><button class="btn pri" id="reset">↺ เริ่มการทดลองใหม่</button></div>
+</div>
+
+<div class="tab" id="t2">
+<h2>🎯 จุดประสงค์การเรียนรู้</h2>
+<p class="muted">เรียนรู้ผ่านฉาก 3D และจุดข้อมูลบนวัตถุ</p>
+<div class="step"><b class="n">1</b><div><h3>อธิบาย</h3><div>อธิบายการเกิดเสียงจากการสั่นของแหล่งกำเนิด และการส่งผ่านพลังงานในตัวกลาง</div></div></div>
+<div class="step"><b class="n">2</b><div><h3>ทดลองและสังเกต</h3><div>ปรับอุณหภูมิและอัตราเร็วเสียงเพื่อสังเกตการเปลี่ยนแปลงของคลื่น</div></div></div>
+<div class="step"><b class="n">3</b><div><h3>วิเคราะห์</h3><div>เปรียบเทียบคลื่นการกระจัดกับคลื่นความดัน และอธิบายผลของอุณหภูมิต่ออัตราเร็วเสียง</div></div></div>
+<h3 class="sec">🔎 สรุปความรู้</h3>
+<div class="step"><b class="n">💡</b><div><h3>เสียงเกิดได้อย่างไร?</h3><div>แหล่งกำเนิดเสียงสั่น ทำให้อนุภาคในตัวกลางสั่น เกิดบริเวณอัดตัวและขยายตัวที่แพร่กระจายเป็นคลื่นเสียง เสียงต้องอาศัยตัวกลาง</div></div></div>
+<div class="step"><b class="n">📈</b><div><h3>การกระจัดกับความดัน</h3><div>คลื่นการกระจัดบอกการเบี่ยงจากตำแหน่งสมดุล ส่วนคลื่นความดันบอกการเปลี่ยนจากความดันปกติ ตำแหน่งที่การกระจัดเป็นศูนย์อาจเป็นตำแหน่งที่ความดันเปลี่ยนมากที่สุด</div></div></div>
+<div class="step"><b class="n">🌡</b><div><h3>อุณหภูมิมีผลอย่างไร?</h3><div>เมื่ออุณหภูมิอากาศสูงขึ้น อัตราเร็วเสียงจะเพิ่มขึ้นโดยประมาณ 0.6 m/s ต่อ 1 °C ตามสมการ v ≈ 331 + 0.6T</div></div></div>
+<p class="note">หมายเหตุ: อัตราเร็วเสียงที่คำนวณจากอุณหภูมิเป็นค่าประมาณ ส่วนแถบ “อัตราเร็วที่ใช้แสดงผล” เป็นตัวแปรทดลองแยกต่างหาก เพื่อให้เปรียบเทียบกับค่าทฤษฎีได้</p>
+</div>
+
+<div class="tab" id="t3">
+<h2>📝 คำถามท้ายกิจกรรม</h2>
+<p class="muted">เลือกคำตอบทั้ง 3 ข้อ แล้วกด “ตรวจคำตอบ” เพื่อดูคะแนนและเฉลย</p>
+<form id="quiz"><div id="qs"></div>
+<div class="row"><button type="submit" class="btn pri">ตรวจคำตอบ</button><button type="button" class="btn" id="clearQuiz">ลองอีกครั้ง</button></div>
+<div class="fb" id="score"></div></form>
+</div>
+
+</div>
+</aside>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const $=i=>document.getElementById(i);
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const S={T:20,V:343,F:220,run:true,t:0,lv:7.8};
+let K=.8,A=.5,W=1.25,goal=null;
+const L=24;
+
+const stage=$('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.15;
+renderer.outputEncoding=THREE.sRGBEncoding;
+$('gl').appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0x061326,40,90);
+const camera=new THREE.PerspectiveCamera(45,1,.1,300);
+const HOME={pos:V3(0,6,28),tgt:V3(0,0,0)};
+camera.position.copy(HOME.pos);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+controls.dampingFactor=.07;
+controls.minDistance=6;
+controls.maxDistance=65;
+controls.maxPolarAngle=Math.PI*.495;
+controls.autoRotateSpeed=.9;
+controls.addEventListener('start',()=>{goal=null});
+
+scene.add(new THREE.AmbientLight(0x8fb4ff,.55));
+scene.add(new THREE.HemisphereLight(0xbfe3ff,0x10233f,.5));
+const sun=new THREE.DirectionalLight(0xffffff,1.15);
+sun.position.set(10,24,16);
+sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-24;sun.shadow.camera.right=24;sun.shadow.camera.top=16;sun.shadow.camera.bottom=-16;
+sun.shadow.camera.near=1;sun.shadow.camera.far=70;
+sun.shadow.bias=-.0004;
+scene.add(sun);
+const lampA=new THREE.PointLight(0x4de1e8,1.4,26);lampA.position.set(-11,1,4);scene.add(lampA);
+const lampB=new THREE.PointLight(0xff6b9a,1.1,26);lampB.position.set(12,1,4);scene.add(lampB);
+
+const floor=new THREE.Mesh(new THREE.CircleGeometry(70,64),new THREE.MeshStandardMaterial({color:0x0b1d35,roughness:.35,metalness:.65}));
+floor.rotation.x=-Math.PI/2;floor.position.y=-6.4;floor.receiveShadow=true;scene.add(floor);
+const grid=new THREE.GridHelper(140,70,0x2a5a86,0x143152);
+grid.position.y=-6.39;grid.material.transparent=true;grid.material.opacity=.4;scene.add(grid);
+
+const tube=new THREE.Mesh(new THREE.CylinderGeometry(1.75,1.75,L+1,48,1,true),new THREE.MeshPhysicalMaterial({color:0x8fd0ff,transparent:true,opacity:.1,roughness:.08,metalness:.1,side:THREE.DoubleSide,depthWrite:false}));
+tube.rotation.z=Math.PI/2;scene.add(tube);
+const ringMat=new THREE.MeshStandardMaterial({color:0x4de1e8,emissive:0x4de1e8,emissiveIntensity:.8,roughness:.3});
+for(let i=0;i<=6;i++){const r=new THREE.Mesh(new THREE.TorusGeometry(1.78,.04,10,64),ringMat);r.rotation.y=Math.PI/2;r.position.x=-L/2-.5+i*(L+1)/6;scene.add(r)}
+
+const N=56,SP=L/(N-1);
+const offs=[[0,0],[.75,0],[-.75,0],[0,.75],[0,-.75],[.55,.55],[-.55,.55],[.55,-.55],[-.55,-.55]];
+const inst=new THREE.InstancedMesh(new THREE.SphereGeometry(.14,14,12),new THREE.MeshStandardMaterial({roughness:.3,metalness:.1,emissive:0x0a3a44,emissiveIntensity:.6}),N*offs.length);
+inst.castShadow=true;inst.frustumCulled=false;scene.add(inst);
+const dummy=new THREE.Object3D(),cA=new THREE.Color(0x4de1e8),cB=new THREE.Color(0xffd166),cT=new THREE.Color();
+
+const marker=new THREE.Mesh(new THREE.SphereGeometry(.3,24,20),new THREE.MeshStandardMaterial({color:0xff6b9a,emissive:0xff2f78,emissiveIntensity:.9,roughness:.25}));
+marker.castShadow=true;scene.add(marker);
+const eq=new THREE.Mesh(new THREE.TorusGeometry(.42,.03,8,32),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.8}));
+eq.rotation.y=Math.PI/2;scene.add(eq);
+
+const speaker=new THREE.Group();
+const cab=new THREE.Mesh(new THREE.BoxGeometry(1.4,3.6,3.6),new THREE.MeshStandardMaterial({color:0x1b2f4d,roughness:.4,metalness:.5}));
+cab.castShadow=true;speaker.add(cab);
+const cone=new THREE.Mesh(new THREE.CylinderGeometry(.5,1.3,1,40,1,true),new THREE.MeshStandardMaterial({color:0x4de1e8,emissive:0x1fa6b0,emissiveIntensity:.7,roughness:.3,side:THREE.DoubleSide}));
+cone.rotation.z=-Math.PI/2;cone.position.x=.9;cone.castShadow=true;speaker.add(cone);
+const rim=new THREE.Mesh(new THREE.TorusGeometry(1.35,.09,12,48),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x4de1e8,emissiveIntensity:.8}));
+rim.rotation.y=Math.PI/2;rim.position.x=.72;speaker.add(rim);
+speaker.position.set(-13.4,0,0);scene.add(speaker);
+
+const listener=new THREE.Group();
+const head=new THREE.Mesh(new THREE.SphereGeometry(1.3,40,32),new THREE.MeshStandardMaterial({color:0x3a5a85,roughness:.45,metalness:.2}));
+head.castShadow=true;listener.add(head);
+const ear=new THREE.Mesh(new THREE.TorusGeometry(.62,.14,16,40),new THREE.MeshStandardMaterial({color:0xff6b9a,emissive:0xff2f78,emissiveIntensity:.6,roughness:.3}));
+ear.rotation.y=Math.PI/2;ear.position.x=-1.2;listener.add(ear);
+listener.position.set(13.4,0,0);scene.add(listener);
+
+function ribbon(color,mode){
+const n=160,pos=new Float32Array((n+1)*6),idx=[];
+for(let i=0;i<n;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}
+const g=new THREE.BufferGeometry();
+g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setIndex(idx);
+const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color,side:THREE.DoubleSide,transparent:true,opacity:.96}));
+m.frustumCulled=false;scene.add(m);
+return function(base,fn){
+for(let i=0;i<=n;i++){const x=-L/2+L*i/n,y=base+fn(x),o=i*6;
+if(mode==='y')pos.set([x,y+.07,0,x,y-.07,0],o);else pos.set([x,y,.07,x,y,-.07],o)}
+g.attributes.position.needsUpdate=true}
+}
+const GD=-4.2,GP=4.2;
+const dY=ribbon(0x4de1e8,'y'),dZ=ribbon(0x4de1e8,'z'),pY=ribbon(0xff6b9a,'y'),pZ=ribbon(0xff6b9a,'z');
+function frame(base,color){
+const pl=new THREE.Mesh(new THREE.PlaneGeometry(L+1,3),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.07,side:THREE.DoubleSide}));
+pl.position.set(0,base,-.3);scene.add(pl);
+const ln=new THREE.Line(new THREE.BufferGeometry().setFromPoints([V3(-L/2,base,0),V3(L/2,base,0)]),new THREE.LineBasicMaterial({color:0x8fb4d8,transparent:true,opacity:.6}));
+scene.add(ln)}
+frame(GD,0x4de1e8);frame(GP,0xff6b9a);
+
+function wave(){
+const ph=-W*S.t;
+let c=0;
+for(let i=0;i<N;i++){
+const x0=-L/2+i*SP,q=K*x0+ph,s=A*Math.sin(q),comp=(-Math.cos(q)+1)/2;
+cT.copy(cA).lerp(cB,Math.pow(comp,1.5));
+for(let j=0;j<offs.length;j++){
+dummy.position.set(x0+s,offs[j][0],offs[j][1]);
+dummy.scale.setScalar(.85+.45*comp);
+dummy.updateMatrix();
+inst.setMatrixAt(c,dummy.matrix);inst.setColorAt(c,cT);c++}}
+inst.instanceMatrix.needsUpdate=true;inst.instanceColor.needsUpdate=true;
+marker.position.set(A*Math.sin(ph),0,0);
+eq.position.set(0,0,0);
+cone.position.x=.9+.16*Math.sin(ph);
+rim.position.x=.72+.16*Math.sin(ph);
+dY(GD,x=>1.2*Math.sin(K*x+ph));dZ(GD,x=>1.2*Math.sin(K*x+ph));
+pY(GP,x=>-1.2*Math.cos(K*x+ph));pZ(GP,x=>-1.2*Math.cos(K*x+ph));
+}
+
+function crest(){let x=(Math.PI+W*S.t)/K;const lv=S.lv;return ((x+6)%lv+lv)%lv-6}
+function rare(){const lv=S.lv;let x=crest()+lv/2;if(x>11)x-=lv;return x}
+
+const HS=[
+{id:'src',ic:'🔈',lb:'แหล่งกำเนิด',tag:'ต้นกำเนิดของเสียง',h:'แหล่งกำเนิดเสียงสั่น',b:'ลำโพงสั่นไป–กลับ ผลักและดึงอนุภาคอากาศที่อยู่ติดกัน ทำให้เกิดการรบกวนที่ส่งต่อออกไปเป็นคลื่นเสียง',f:'ไม่มีการสั่น = ไม่มีเสียง',p:()=>V3(-13.4,3.1,0),tg:()=>V3(-9,0,0),o:[4,3,12]},
+{id:'cmp',ic:'⬆',lb:'บริเวณอัดตัว',tag:'ความดันสูง',h:'บริเวณอัดตัว (Compression)',b:'อนุภาคอยู่ใกล้กันกว่าปกติ ความดันอากาศสูงกว่าปกติ (ΔP > 0) ในภาพแสดงเป็นอนุภาคสีทอง ตำแหน่งจะเลื่อนไปตามคลื่น',f:'ความชันของการกระจัด ณ ตำแหน่งนี้เป็นลบ',p:()=>V3(crest(),2.7,0),tg:()=>V3(crest(),0,0),o:[3,2,10]},
+{id:'rar',ic:'⬇',lb:'บริเวณขยายตัว',tag:'ความดันต่ำ',h:'บริเวณขยายตัว (Rarefaction)',b:'อนุภาคอยู่ห่างกันกว่าปกติ ความดันอากาศต่ำกว่าปกติ (ΔP < 0) ในภาพแสดงเป็นอนุภาคสีฟ้า',f:'อัดตัวและขยายตัวสลับกันทุกครึ่งความยาวคลื่น (λ/2)',p:()=>V3(rare(),2.7,0),tg:()=>V3(rare(),0,0),o:[3,2,10]},
+{id:'par',ic:'⚪',lb:'อนุภาคที่ติดตาม',tag:'คลื่นตามยาว',h:'อนุภาคสั่นรอบตำแหน่งสมดุล',b:'ลูกบอลสีชมพูสั่นไป–กลับรอบวงแหวนสีขาว (ตำแหน่งสมดุล) ในแนวเดียวกับทิศเดินทางของคลื่น จึงเรียกว่าคลื่นตามยาว',f:'พลังงานเดินทางถึงผู้ฟัง แต่อนุภาคไม่ได้เดินทางไปด้วย',p:()=>V3(marker.position.x,-2.4,0),tg:()=>V3(0,0,0),o:[2,2,9]},
+{id:'dsp',ic:'📈',lb:'กราฟการกระจัด',tag:'คลื่นการกระจัด',h:'กราฟการกระจัดของอนุภาค',b:'แสดงการเบี่ยงของอนุภาคจากตำแหน่งสมดุลตามตำแหน่ง ค่าสูงสุดและต่ำสุดหมายถึงอนุภาคเบี่ยงจากตำแหน่งสมดุลมากที่สุด',f:'s = A sin(kx − ωt)',p:()=>V3(9.5,-6.2,0),tg:()=>V3(3,-3,0),o:[0,3,17]},
+{id:'prs',ic:'📊',lb:'กราฟความดัน',tag:'คลื่นความดัน',h:'กราฟการเปลี่ยนแปลงความดัน',b:'ความดันแปรผกผันกับความชันของการกระจัด จึงต่างเฟสกับกราฟการกระจัด 90° ตำแหน่งที่การกระจัดเป็นศูนย์ ความดันเปลี่ยนมากที่สุด',f:'ΔP ∝ −ds/dx',p:()=>V3(9.5,6.3,0),tg:()=>V3(3,3,0),o:[0,3,17]},
+{id:'lis',ic:'👂',lb:'ผู้ฟัง',tag:'ปลายทางของพลังงาน',h:'ผู้ฟังรับคลื่นเสียง',b:'แก้วหูสั่นตามความดันที่เปลี่ยนแปลง สมองแปลงเป็นเสียง ความถี่สูงให้เสียงแหลม แอมพลิจูดมากให้เสียงดัง',f:'ผู้ฟังได้รับพลังงานคลื่น ไม่ได้รับอนุภาคจากลำโพง',p:()=>V3(13.4,3.1,0),tg:()=>V3(10,0,0),o:[-4,3,12]}
+];
+const hsBox=$('hs'),info=$('info');let active=null;
+HS.forEach(d=>{
+const b=document.createElement('button');b.className='hs';b.innerHTML='<span class="dot">'+d.ic+'</span><span class="lb">'+d.lb+'</span>';
+b.addEventListener('click',()=>open(d));d.el=b;hsBox.appendChild(b)});
+function open(d){
+active=d;HS.forEach(x=>x.el.classList.toggle('on',x===d));
+info.innerHTML='<div class="ic">'+d.ic+'</div><div><small>'+d.tag+'</small><h3>'+d.h+'</h3><p>'+d.b+'</p><div class="fact">💡 '+d.f+'</div></div><button class="x" aria-label="ปิด">×</button>';
+info.classList.remove('show');void info.offsetWidth;info.classList.add('show');
+info.querySelector('.x').onclick=closeCard;
+const t=d.tg();goal={pos:t.clone().add(V3(d.o[0],d.o[1],d.o[2])),tgt:t};
+}
+function closeCard(){info.classList.remove('show');HS.forEach(x=>x.el.classList.remove('on'));active=null}
+
+const tmp=V3(0,0,0);
+function place(){
+const w=stage.clientWidth,h=stage.clientHeight;
+HS.forEach(d=>{
+tmp.copy(d.p()).project(camera);
+if(tmp.z>1){d.el.style.display='none';return}
+d.el.style.display='';
+d.el.style.transform='translate('+((tmp.x*.5+.5)*w-13)+'px,'+((-tmp.y*.5+.5)*h-13)+'px)'});
+}
+
+function fit(){
+const w=stage.clientWidth,h=stage.clientHeight||1,a=w/h;
+renderer.setSize(w,h);camera.aspect=a;
+camera.fov=a<1.6?Math.min(85,45*1.6/a):45;
+camera.updateProjectionMatrix()}
+new ResizeObserver(fit).observe(stage);fit();
+
+const clock=new THREE.Clock();
+function loop(){
+requestAnimationFrame(loop);
+const dt=Math.min(clock.getDelta(),.05);
+if(S.run)S.t+=dt;
+if(goal){camera.position.lerp(goal.pos,.07);controls.target.lerp(goal.tgt,.07);if(camera.position.distanceTo(goal.pos)<.05)goal=null}
+controls.update();wave();place();renderer.render(scene,camera)}
+loop();
+
+const temp=$('temp'),speed=$('speed'),freq=$('freq');
+function sync(){
+const calc=331+.6*S.T,lam=S.V/S.F;
+S.lv=lam*5;K=2*Math.PI/S.lv;A=Math.min(.5,.6/K);W=2*Math.PI*.4*S.F/220;
+$('tempOut').textContent=S.T+' °C';$('speedOut').textContent=S.V+' m/s';$('freqOut').textContent=S.F+' Hz';
+$('calcSpeed').textContent=calc.toFixed(1)+' m/s';
+const df=S.V-calc;$('diff').textContent=(df>=0?'+':'')+df.toFixed(1)+' m/s';
+$('lam').textContent=lam.toFixed(2)+' m';
+$('period').textContent=(1000/S.V).toFixed(2)+' ms';
+[temp,speed,freq].forEach(e=>e.style.setProperty('--p',((e.value-e.min)/(e.max-e.min)*100)+'%'))}
+temp.addEventListener('input',()=>{S.T=+temp.value;S.V=Math.round(331+.6*S.T);speed.value=S.V;sync()});
+speed.addEventListener('input',()=>{S.V=+speed.value;sync()});
+freq.addEventListener('input',()=>{S.F=+freq.value;sync()});
+sync();
+
+$('reset').addEventListener('click',()=>{S.T=20;S.V=343;S.F=220;S.t=0;temp.value=20;speed.value=343;freq.value=220;sync()});
+$('bPlay').addEventListener('click',e=>{S.run=!S.run;e.currentTarget.innerHTML=(S.run?'⏸ <span>หยุด</span>':'▶ <span>เล่น</span>');e.currentTarget.classList.toggle('on',S.run)});
+$('bRot').addEventListener('click',e=>{controls.autoRotate=!controls.autoRotate;e.currentTarget.classList.toggle('on',controls.autoRotate)});
+$('bHs').addEventListener('click',e=>{hsBox.classList.toggle('off');e.currentTarget.classList.toggle('on',!hsBox.classList.contains('off'))});
+$('bHome').addEventListener('click',()=>{goal={pos:HOME.pos.clone(),tgt:HOME.tgt.clone()};closeCard()});
+
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id===b.dataset.t))}));
+
+const Q=[
+{q:'1. เสียงเดินทางในอากาศได้อย่างไร?',o:['อนุภาคอากาศเคลื่อนจากแหล่งกำเนิดไปถึงหูทั้งหมด','อนุภาคอากาศสั่นไป–กลับและส่งผ่านพลังงานต่อกัน','เสียงเดินทางได้โดยไม่ต้องมีตัวกลาง'],a:1,e:'เฉลย: ข้อ ข — อนุภาคสั่นรอบตำแหน่งสมดุลและถ่ายทอดพลังงาน ไม่ได้เดินทางไปพร้อมคลื่นเป็นระยะไกล'},
+{q:'2. บริเวณใดสัมพันธ์กับความดันอากาศที่สูงกว่าปกติในคลื่นเสียง?',o:['บริเวณอัดตัวของอนุภาค','บริเวณขยายตัวของอนุภาค','ทุกบริเวณมีความดันเท่ากันเสมอ'],a:0,e:'เฉลย: ข้อ ก — บริเวณอัดตัวมีอนุภาคอยู่ใกล้กันมากขึ้น จึงมีความดันสูงกว่าปกติ'},
+{q:'3. เมื่ออุณหภูมิอากาศเพิ่มจาก 20 °C เป็น 30 °C อัตราเร็วเสียงโดยประมาณเปลี่ยนอย่างไร?',o:['ลดลง 6 m/s','ไม่เปลี่ยนแปลง','เพิ่มขึ้น 6 m/s'],a:2,e:'เฉลย: ข้อ ค — Δv ≈ 0.6 × (30−20) = 6 m/s'}
+];
+const th=['ก','ข','ค'];
+$('qs').innerHTML=Q.map((x,i)=>'<div class="qq"><p>'+x.q+'</p>'+x.o.map((o,j)=>'<label><input type="radio" name="q'+i+'" value="'+j+'"><span>'+th[j]+'. '+o+'</span></label>').join('')+'<div class="fb" id="f'+i+'"></div></div>').join('');
+$('quiz').addEventListener('submit',e=>{
+e.preventDefault();let sc=0;
+Q.forEach((x,i)=>{
+const ch=document.querySelector('input[name=q'+i+']:checked'),f=$('f'+i),ok=ch&&+ch.value===x.a;
+if(ok)sc++;f.style.display='block';f.className='fb '+(ok?'good':'bad');f.textContent=(ok?'✅ ถูกต้อง · ':'❌ ยังไม่ถูก · ')+x.e});
+const s=$('score');s.style.display='block';s.className='fb '+(sc===3?'good':'bad');
+s.innerHTML='<strong>คะแนนของคุณ: '+sc+'/3</strong><br>'+(sc===3?'ยอดเยี่ยม! เข้าใจแนวคิดหลักแล้ว 🎉':sc===2?'ดีมาก ทบทวนเฉลยอีกหนึ่งข้อ':'ทบทวนสรุปความรู้ในแท็บ “เนื้อหา” แล้วลองตอบอีกครั้ง')});
+$('clearQuiz').addEventListener('click',()=>{$('quiz').reset();Q.forEach((x,i)=>{$('f'+i).style.display='none'});$('score').style.display='none'});
+</script>
+</body>
+</html>
